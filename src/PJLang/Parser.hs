@@ -1,15 +1,17 @@
-module Parser (buildAst) where
+module PJLang.Parser (buildAst) where
 
-import Ast
+import Control.Monad (void)
+import Control.Applicative ((<$>), (<*>), (<*), (*>), (<|>), many)
+import FunctionsAndTypesForParsing (regularParse, parseWithEof, parseWithLeftOver)
 import Text.Parsec (ParseError)
 import Text.Parsec.String (Parser)
-import Text.Parsec.String.Parsec (parse, try)
 import Text.Parsec.String.Char (oneOf, digit, string, letter, char)
 import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy)
-import Control.Applicative ((<$>), (<*>), (<*), (*>), (<|>), many)
-import Control.Monad (void)
-import FunctionsAndTypesForParsing (regularParse, parseWithEof, parseWithLeftOver)
 import Text.Parsec.String.Expr
+import Text.Parsec.String.Parsec (parse, try)
+
+import PJLang.Ast
+
 
 whitespace :: Parser ()
 whitespace = void $ many (oneOf [' ', '\n', '\t'])
@@ -100,4 +102,4 @@ postfixE = leftRecursive baseTerm suffix
 --------------------------------------------------------
 
 buildAst :: String -> Either ParseError Expr
-buildAst code = parseWithEof Parser.expr code
+buildAst code = parseWithEof expr code

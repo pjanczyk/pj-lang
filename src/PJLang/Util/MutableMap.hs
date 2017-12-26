@@ -1,4 +1,4 @@
-module MutableMap (MutableMap, empty, get, put, contains) where
+module PJLang.Util.MutableMap (MutableMap, empty, get, put, contains) where
 
 import Data.IORef
 import qualified Data.Map.Strict as Map

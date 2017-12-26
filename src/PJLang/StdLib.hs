@@ -1,9 +1,11 @@
-module StdLib where
+module PJLang.StdLib (print, println) where
 
 import Prelude hiding (print)
-import Env
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except
+
+import PJLang.Env
+
 
 print :: Env -> [Val] -> IOExceptEval Val
 print _ [arg] = do

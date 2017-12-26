@@ -3,9 +3,9 @@ module Main where
 import Control.Monad.Trans.Except (runExceptT)
 import Text.Parsec.Error (ParseError)
 
-import Env (Val, EvalException)
-import Interpreter (newEnv, evalExpr)
-import Parser (buildAst)
+import PJLang.Env (Val, EvalException)
+import PJLang.Interpreter (newEnv, evalExpr)
+import PJLang.Parser (buildAst)
 
 
 main :: IO ()

@@ -1,4 +1,4 @@
-module Ast where
+module PJLang.Ast where
 
 data UnaryOp
     = UnaryPlus

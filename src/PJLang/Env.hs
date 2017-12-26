@@ -1,7 +1,8 @@
-module Env where
+module PJLang.Env where
 
 import Control.Monad.Trans.Except
-import qualified MutableMap as MMap
+
+import qualified PJLang.Util.MutableMap as MMap
 
 
 data Val

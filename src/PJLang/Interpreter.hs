@@ -1,12 +1,12 @@
-module Interpreter where
-
-import Data.Maybe
+module PJLang.Interpreter where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except
-import Ast
-import Env
-import qualified StdLib
+import Data.Maybe
+
+import PJLang.Ast
+import PJLang.Env
+import qualified PJLang.StdLib as StdLib
 
 newEnv :: IO Env
 newEnv = do
