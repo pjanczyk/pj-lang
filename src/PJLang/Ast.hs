@@ -25,6 +25,9 @@ data Expr
     | AssignE Expr Expr
         deriving (Eq, Show)
 
+newtype Block = Block [Expr]
+    deriving (Eq, Show)
+
 unaryOpToString :: UnaryOp -> String
 unaryOpToString UnaryPlus  = "prefix +"
 unaryOpToString UnaryMinus = "prefix -"

@@ -6,7 +6,7 @@ import FunctionsAndTypesForParsing (parseWithEof)
 import Text.Parsec (ParseError)
 import Text.Parsec.String (Parser)
 import Text.Parsec.String.Char (oneOf, digit, string, letter, char)
-import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy)
+import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy, sepEndBy)
 import Text.Parsec.String.Expr
 import Text.Parsec.String.Parsec (parse, try)
 
@@ -36,9 +36,13 @@ parens p = symbol "(" *> p <* symbol ")"
 
 ------------------------------------------------
 
+-- block :: Parser Block
+
+stmtList :: Parser [Expr]
+stmtList = expr `sepEndBy` symbol ";"
+
 expr :: Parser Expr
 expr = buildExpressionParser table term
-    where
 
 baseTerm :: Parser Expr
 baseTerm = identifierE <|> numLiteralE <|> parensE

@@ -12,6 +12,7 @@ newEnv :: IO Env
 newEnv = do
     env <- empty
     setVar env "print" (NativeFuncVal StdLib.print)
+    setVar env "printLine" (NativeFuncVal StdLib.printLine)
     return env
 
 evalExpr :: Env -> Expr -> IOExceptEval Val

@@ -1,4 +1,4 @@
-module PJLang.StdLib (print, println) where
+module PJLang.StdLib (print, printLine) where
 
 import Prelude hiding (print)
 import Control.Monad.Trans.Class (lift)
@@ -20,8 +20,8 @@ print _ [arg] = do
 print _ _ = throwE $ EvalException $ "Function `print` expect 1 argument"
 
 
-println :: Env -> [Val] -> IOExceptEval Val
-println env args = do
+printLine :: Env -> [Val] -> IOExceptEval Val
+printLine env args = do
     print env args
     lift $ putStrLn ""
     return NullVal
