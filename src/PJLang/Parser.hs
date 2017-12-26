@@ -1,7 +1,8 @@
 module PJLang.Parser (buildAst) where
 
 import Control.Monad (void)
-import Control.Applicative ((<$>), (<*>), (<*), (*>), (<|>), many)
+import Control.Applicative ((<$>), (<$), (<*>), (<*), (*>), (<|>), many)
+import Data.Char (ord)
 import FunctionsAndTypesForParsing (parseWithEof)
 import Text.Parsec (ParseError)
 import qualified Text.Parsec.Token as T
@@ -25,7 +26,7 @@ tokenParser = T.makeTokenParser $
         T.opStart         = oneOf ":!#$%&*+./<=>?@\\^|-~",
         T.opLetter        = oneOf ":!#$%&*+./<=>?@\\^|-~",
         T.reservedOpNames = [],
-        T.reservedNames   = ["if", "else", "then", "while", "do"],
+        T.reservedNames   = ["if", "else", "then", "while", "do", "null", "true", "false"],
         T.caseSensitive   = True
     }
 
@@ -83,7 +84,7 @@ expr :: Parser Expr
 expr = buildExpressionParser table term
 
 baseTerm :: Parser Expr
-baseTerm = identifierE <|> numLiteralE <|> parensE
+baseTerm = nullE <|> boolE <|> intE <|> stringE <|> identifierE <|> parensE
 
 term :: Parser Expr
 term = ifElseE <|> whileE <|> postfixE
@@ -109,9 +110,17 @@ table =
         prefix op name = Prefix (PrefixOpE op <$ symbol name)
         binary op name assoc = Infix (BinaryOpE op <$ symbol name) assoc
 
+nullE :: Parser Expr
+nullE = NullE <$ keyword "null"
 
-numLiteralE :: Parser Expr
-numLiteralE = NumLiteralE <$> natural
+boolE :: Parser Expr
+boolE = (BoolE True <$ keyword "true") <|> (BoolE False <$ keyword "false")
+
+intE :: Parser Expr
+intE = IntE <$> (natural <|> (toInteger <$> ord <$> charLiteral))
+
+stringE :: Parser Expr
+stringE = StringE <$> stringLiteral
 
 identifierE :: Parser Expr
 identifierE = IdentifierE <$> identifier
@@ -128,7 +137,7 @@ postfixE :: Parser Expr
 postfixE = leftRecursive baseTerm suffix
         where
             suffix e = callE e <|> subscriptE e
-            callE e = CallE e <$> parens (expr `sepBy` (symbol ","))
+            callE e = CallE e <$> parens (expr `sepBy` symbol ",")
             subscriptE e = SubscriptE e <$> brackets expr
 
 ifElseE :: Parser Expr

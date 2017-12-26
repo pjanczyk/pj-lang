@@ -17,7 +17,13 @@ newEnv = do
 
 evalExpr :: Env -> Expr -> IOExceptEval Val
 
-evalExpr _   (NumLiteralE val) = return $ IntVal (fromIntegral val)  -- TODO(pjanczyk): fix integer types
+evalExpr _   NullE = return NullVal
+
+evalExpr _   (BoolE bool) = return $ BoolVal bool
+
+evalExpr _   (IntE int) = return $ IntVal (fromIntegral int)  -- TODO(pjanczyk): fix integer types
+
+evalExpr _   (StringE string) = return $ StringVal string
 
 evalExpr env (IdentifierE name) = lift $ fromMaybe NullVal <$> getVar env name
 

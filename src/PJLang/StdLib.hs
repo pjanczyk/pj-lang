@@ -10,10 +10,11 @@ import PJLang.Env
 print :: Env -> [Val] -> IOExceptEval Val
 print _ [arg] = do
     let str = case arg of
+            NullVal          -> "<null>"
+            BoolVal bool     -> if bool then "true" else "false"
             IntVal int       -> show int
             StringVal string -> string
             NativeFuncVal _  -> "<native function>"
-            NullVal          -> "<null>"
     lift $ putStr str
     return NullVal
 

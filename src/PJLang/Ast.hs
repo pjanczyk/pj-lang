@@ -15,7 +15,10 @@ data BinaryOp
         deriving (Eq, Show) 
 
 data Expr
-    = NumLiteralE Integer
+    = NullE
+    | BoolE Bool
+    | IntE Integer
+    | StringE String
     | IdentifierE String
     | ParensE Expr
     | PrefixOpE UnaryOp Expr
