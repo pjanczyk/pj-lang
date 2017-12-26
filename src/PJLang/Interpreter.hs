@@ -73,6 +73,22 @@ evalExpr env (AssignE lExpr rExpr) = case lExpr of
 
 evalExpr env (BlockE stmts) = foldl (\a b -> a >> evalExpr env b) (return NullVal) stmts
 
-evalExpr env (IfElseE cond then' else') = undefined  -- TODO(pjanczyk)
+evalExpr env (IfElseE condExpr thenExpr maybeElseExpr) = do
+    condVal <- evalExpr env condExpr
+    case condVal of
+        BoolVal True  -> evalExpr env thenExpr
+        BoolVal False -> case maybeElseExpr of
+            Just elseExpr  -> evalExpr env elseExpr
+            Nothing        -> return NullVal
+        _             -> throwE $ EvalException $
+            "The condition in `if` expression must be of type `bool`"
 
-evalExpr env (WhileE cond body) = undefined  -- TODO(pjanczyk)
+evalExpr env (WhileE condExpr bodyExpr) = do
+    condVal <- evalExpr env condExpr
+    case condVal of
+        BoolVal True  -> do
+            evalExpr env bodyExpr
+            evalExpr env (WhileE condExpr bodyExpr)
+        BoolVal False -> return NullVal
+        _             -> throwE $ EvalException $
+            "The condition in `while` expression must be of type `bool`"
