@@ -14,19 +14,20 @@ import Text.Parsec.String.Parsec (parse, try)
 import PJLang.Ast
 
 tokenParser :: T.TokenParser ()
-tokenParser = T.makeTokenParser $ T.LanguageDef
-                { T.commentStart    = "/*"
-                , T.commentEnd      = "*/"
-                , T.commentLine     = "//"
-                , T.nestedComments  = True
-                , T.identStart      = letter <|> char '_'
-                , T.identLetter     = alphaNum <|> oneOf "_'"
-                , T.opStart         = oneOf ":!#$%&*+./<=>?@\\^|-~"
-                , T.opLetter        = oneOf ":!#$%&*+./<=>?@\\^|-~"
-                , T.reservedOpNames = []
-                , T.reservedNames   = []
-                , T.caseSensitive   = True
-                }
+tokenParser = T.makeTokenParser $
+    T.LanguageDef {
+        T.commentStart    = "/*",
+        T.commentEnd      = "*/",
+        T.commentLine     = "//",
+        T.nestedComments  = True,
+        T.identStart      = letter <|> char '_',
+        T.identLetter     = alphaNum <|> oneOf "_'",
+        T.opStart         = oneOf ":!#$%&*+./<=>?@\\^|-~",
+        T.opLetter        = oneOf ":!#$%&*+./<=>?@\\^|-~",
+        T.reservedOpNames = [],
+        T.reservedNames   = ["if", "else", "then", "while", "do"],
+        T.caseSensitive   = True
+    }
 
 --------------------------------------------------
 -- Token parsers
