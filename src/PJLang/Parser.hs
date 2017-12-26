@@ -2,7 +2,7 @@ module PJLang.Parser (buildAst) where
 
 import Control.Monad (void)
 import Control.Applicative ((<$>), (<*>), (<*), (*>), (<|>), many)
-import FunctionsAndTypesForParsing (regularParse, parseWithEof, parseWithLeftOver)
+import FunctionsAndTypesForParsing (parseWithEof)
 import Text.Parsec (ParseError)
 import Text.Parsec.String (Parser)
 import Text.Parsec.String.Char (oneOf, digit, string, letter, char)

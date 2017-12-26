@@ -1,6 +1,6 @@
 module PJLang.Util.MutableMap (MutableMap, empty, get, put, contains) where
 
-import Data.IORef
+import Data.IORef (IORef, newIORef, readIORef, modifyIORef')
 import qualified Data.Map.Strict as Map
     
 type MutableMap k v = IORef (Map.Map k v)

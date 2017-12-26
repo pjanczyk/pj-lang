@@ -2,7 +2,7 @@ module PJLang.StdLib (print, println) where
 
 import Prelude hiding (print)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Except
+import Control.Monad.Trans.Except (throwE)
 
 import PJLang.Env
 

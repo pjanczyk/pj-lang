@@ -1,6 +1,6 @@
 module PJLang.Env where
 
-import Control.Monad.Trans.Except
+import Control.Monad.Trans.Except (Except, ExceptT)
 
 import qualified PJLang.Util.MutableMap as MMap
 

@@ -1,8 +1,8 @@
 module PJLang.Interpreter where
 
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Except
-import Data.Maybe
+import Control.Monad.Trans.Except (throwE)
+import Data.Maybe (fromMaybe)
 
 import PJLang.Ast
 import PJLang.Env
