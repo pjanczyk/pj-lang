@@ -13,28 +13,40 @@ import Text.Parsec.String.Parsec (parse, try)
 import PJLang.Ast
 
 
-whitespace :: Parser ()
-whitespace = void $ many (oneOf [' ', '\n', '\t'])
+--------------------------------------------------
+-- Helper parsers
+--------------------------------------------------
+
+whitespaces :: Parser ()
+whitespaces = void $ many (oneOf [' ', '\n', '\t'])
 
 lexeme :: Parser a -> Parser a
-lexeme p = p <* whitespace
+lexeme p = p <* whitespaces
 
 integer :: Parser Integer
-integer =  read <$> lexeme (many1 digit)
+integer =  read <$> (lexeme $ many1 digit)
 
 identifier :: Parser String
 identifier = lexeme ((:) <$> firstChar <*> many nonFirstChar)
-  where
-    firstChar = letter <|> char '_'
-    nonFirstChar = digit <|> firstChar
+    where
+        firstChar = letter <|> char '_'
+        nonFirstChar = digit <|> firstChar
 
 symbol :: String -> Parser String
 symbol s = lexeme $ string s
 
 parens :: Parser a -> Parser a
-parens p = symbol "(" *> p <* symbol ")"
+parens p = between (symbol "(") (symbol ")") p
 
-------------------------------------------------
+brackets :: Parser a -> Parser a
+brackets p = between (symbol "[") (symbol "]") p
+
+--------------------------------------------------
+-- AST parsers
+--------------------------------------------------
+
+buildAst :: String -> Either ParseError Block
+buildAst code = parseWithEof stmtList code
 
 stmtList :: Parser Block
 stmtList = Block <$> expr `sepEndBy` symbol ";"
@@ -88,10 +100,5 @@ postfixE :: Parser Expr
 postfixE = leftRecursive baseTerm suffix
         where
             suffix e = callE e <|> subscriptE e
-            callE e = CallE e <$> between (symbol "(") (symbol ")") (expr `sepBy` (symbol ","))
-            subscriptE e = SubscriptE e <$> between (symbol "[") (symbol "]") expr
-
---------------------------------------------------------
-
-buildAst :: String -> Either ParseError Block
-buildAst code = parseWithEof stmtList code
+            callE e = CallE e <$> parens (expr `sepBy` (symbol ","))
+            subscriptE e = SubscriptE e <$> brackets expr
