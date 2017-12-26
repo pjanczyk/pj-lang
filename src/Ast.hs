@@ -12,7 +12,6 @@ data BinaryOp
     | BinaryMod
     | BinaryAdd
     | BinarySub
-    | BinaryAssign
         deriving (Eq, Show) 
 
 data Expr
@@ -23,4 +22,17 @@ data Expr
     | BinaryOpE BinaryOp Expr Expr
     | CallE Expr [Expr]
     | SubscriptE Expr Expr
+    | AssignE Expr Expr
         deriving (Eq, Show)
+
+unaryOpToString :: UnaryOp -> String
+unaryOpToString UnaryPlus  = "prefix +"
+unaryOpToString UnaryMinus = "prefix -"
+
+binaryOpToString :: BinaryOp -> String
+binaryOpToString BinaryPow = "infix ^"
+binaryOpToString BinaryMul = "infix *"
+binaryOpToString BinaryDiv = "infix /"
+binaryOpToString BinaryMod = "infix %"
+binaryOpToString BinaryAdd = "infix +"
+binaryOpToString BinarySub = "infix -"

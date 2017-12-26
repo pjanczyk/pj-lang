@@ -1,4 +1,4 @@
-module Parser where
+module Parser (buildAst) where
 
 import Ast
 import Text.Parsec (ParseError)
@@ -96,3 +96,8 @@ postfixE = leftRecursive baseTerm suffix
             suffix e = callE e <|> subscriptE e
             callE e = CallE e <$> between (symbol "(") (symbol ")") (expr `sepBy` (symbol ","))
             subscriptE e = SubscriptE e <$> between (symbol "[") (symbol "]") expr
+
+--------------------------------------------------------
+
+buildAst :: String -> Either ParseError Expr
+buildAst code = parseWithEof Parser.expr code
