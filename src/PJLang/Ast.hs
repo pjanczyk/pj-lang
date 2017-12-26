@@ -23,10 +23,10 @@ data Expr
     | CallE Expr [Expr]
     | SubscriptE Expr Expr
     | AssignE Expr Expr
+    | BlockE [Expr]
+    | IfElseE Expr Expr (Maybe Expr)
+    | WhileE Expr Expr
         deriving (Eq, Show)
-
-newtype Block = Block [Expr]
-    deriving (Eq, Show)
 
 unaryOpToString :: UnaryOp -> String
 unaryOpToString UnaryPlus  = "prefix +"

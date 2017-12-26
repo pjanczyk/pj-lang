@@ -4,39 +4,63 @@ import Control.Monad (void)
 import Control.Applicative ((<$>), (<*>), (<*), (*>), (<|>), many)
 import FunctionsAndTypesForParsing (parseWithEof)
 import Text.Parsec (ParseError)
+import qualified Text.Parsec.Token as T
 import Text.Parsec.String (Parser)
-import Text.Parsec.String.Char (oneOf, digit, string, letter, char)
-import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy, sepEndBy)
+import Text.Parsec.String.Char (oneOf, digit, string, letter, char, alphaNum)
+import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy, sepEndBy, optionMaybe)
 import Text.Parsec.String.Expr
 import Text.Parsec.String.Parsec (parse, try)
 
 import PJLang.Ast
 
+tokenParser :: T.TokenParser ()
+tokenParser = T.makeTokenParser $ T.LanguageDef
+                { T.commentStart    = "/*"
+                , T.commentEnd      = "*/"
+                , T.commentLine     = "//"
+                , T.nestedComments  = True
+                , T.identStart      = letter <|> char '_'
+                , T.identLetter     = alphaNum <|> oneOf "_'"
+                , T.opStart         = oneOf ":!#$%&*+./<=>?@\\^|-~"
+                , T.opLetter        = oneOf ":!#$%&*+./<=>?@\\^|-~"
+                , T.reservedOpNames = []
+                , T.reservedNames   = []
+                , T.caseSensitive   = True
+                }
 
 --------------------------------------------------
--- Helper parsers
+-- Token parsers
 --------------------------------------------------
-
-whitespaces :: Parser ()
-whitespaces = void $ many (oneOf [' ', '\n', '\t'])
-
-lexeme :: Parser a -> Parser a
-lexeme p = p <* whitespaces
-
-integer :: Parser Integer
-integer =  read <$> (lexeme $ many1 digit)
 
 identifier :: Parser String
-identifier = lexeme ((:) <$> firstChar <*> many nonFirstChar)
-    where
-        firstChar = letter <|> char '_'
-        nonFirstChar = digit <|> firstChar
+identifier = T.identifier tokenParser
 
-symbol :: String -> Parser String
-symbol s = lexeme $ string s
+keyword :: String -> Parser ()
+keyword = T.reserved tokenParser
+
+operator :: String -> Parser ()
+operator = T.reservedOp tokenParser
+
+charLiteral :: Parser Char
+charLiteral = T.charLiteral tokenParser
+
+stringLiteral :: Parser String
+stringLiteral = T.stringLiteral tokenParser
+
+natural :: Parser Integer
+natural = T.natural tokenParser
+
+symbol :: String -> Parser ()
+symbol = void <$> T.symbol tokenParser
 
 parens :: Parser a -> Parser a
 parens p = between (symbol "(") (symbol ")") p
+
+braces :: Parser a -> Parser a
+braces p = between (symbol "{") (symbol "}") p
+
+angles :: Parser a -> Parser a
+angles p = between (symbol "<") (symbol ">") p
 
 brackets :: Parser a -> Parser a
 brackets p = between (symbol "[") (symbol "]") p
@@ -45,11 +69,14 @@ brackets p = between (symbol "[") (symbol "]") p
 -- AST parsers
 --------------------------------------------------
 
-buildAst :: String -> Either ParseError Block
+buildAst :: String -> Either ParseError Expr
 buildAst code = parseWithEof stmtList code
 
-stmtList :: Parser Block
-stmtList = Block <$> expr `sepEndBy` symbol ";"
+blockE :: Parser Expr
+blockE = braces stmtList
+
+stmtList :: Parser Expr
+stmtList = BlockE <$> (expr `sepEndBy` symbol ";")
 
 expr :: Parser Expr
 expr = buildExpressionParser table term
@@ -57,8 +84,8 @@ expr = buildExpressionParser table term
 baseTerm :: Parser Expr
 baseTerm = identifierE <|> numLiteralE <|> parensE
 
-term :: Parser Expr       
-term = postfixE
+term :: Parser Expr
+term = ifElseE <|> whileE <|> postfixE
 
 table :: OperatorTable Expr
 table =
@@ -83,7 +110,7 @@ table =
 
 
 numLiteralE :: Parser Expr
-numLiteralE = NumLiteralE <$> integer
+numLiteralE = NumLiteralE <$> natural
 
 identifierE :: Parser Expr
 identifierE = IdentifierE <$> identifier
@@ -102,3 +129,16 @@ postfixE = leftRecursive baseTerm suffix
             suffix e = callE e <|> subscriptE e
             callE e = CallE e <$> parens (expr `sepBy` (symbol ","))
             subscriptE e = SubscriptE e <$> brackets expr
+
+ifElseE :: Parser Expr
+ifElseE = IfElseE <$> cond <*> then' <*> optionMaybe else'
+    where
+        cond  = keyword "if" *> expr
+        then' = (keyword "then" *> expr) <|> blockE
+        else' = keyword "else" *> (expr <|> blockE)
+
+whileE :: Parser Expr
+whileE = WhileE <$> cond <*> body
+    where
+        cond = keyword "while" *> expr
+        body = (keyword "do" *> expr) <|> blockE
