@@ -36,10 +36,8 @@ parens p = symbol "(" *> p <* symbol ")"
 
 ------------------------------------------------
 
--- block :: Parser Block
-
-stmtList :: Parser [Expr]
-stmtList = expr `sepEndBy` symbol ";"
+stmtList :: Parser Block
+stmtList = Block <$> expr `sepEndBy` symbol ";"
 
 expr :: Parser Expr
 expr = buildExpressionParser table term
@@ -64,6 +62,8 @@ table =
     ], [
         binary BinaryAdd "+" AssocLeft,
         binary BinarySub "-" AssocLeft
+    ], [
+        Infix (AssignE <$ symbol "=") AssocRight  
     ]]
     where
         prefix op name = Prefix (PrefixOpE op <$ symbol name)
@@ -79,18 +79,6 @@ identifierE = IdentifierE <$> identifier
 parensE :: Parser Expr
 parensE = parens expr
 
--- callE :: Parser Expr
--- callE = do
---     e <- baseTerm
---     maybeAddSuffix e
---     where
---         addSuffix callee = do
---             args <- between (symbol "(") (symbol ")") (expr `sepBy` (symbol ","))
---             maybeAddSuffix $ CallE callee args
-        
---         maybeAddSuffix e = addSuffix e <|> return e
-
-
 leftRecursive :: Parser Expr -> (Expr -> Parser Expr) -> Parser Expr
 leftRecursive baseParser suffixParser = baseParser >>= tryAddSuffix
     where
@@ -105,5 +93,5 @@ postfixE = leftRecursive baseTerm suffix
 
 --------------------------------------------------------
 
-buildAst :: String -> Either ParseError Expr
-buildAst code = parseWithEof expr code
+buildAst :: String -> Either ParseError Block
+buildAst code = parseWithEof stmtList code

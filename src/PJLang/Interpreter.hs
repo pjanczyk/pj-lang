@@ -1,4 +1,4 @@
-module PJLang.Interpreter where
+module PJLang.Interpreter (newEnv, evalBlock) where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (throwE)
@@ -14,6 +14,9 @@ newEnv = do
     setVar env "print" (NativeFuncVal StdLib.print)
     setVar env "printLine" (NativeFuncVal StdLib.printLine)
     return env
+
+evalBlock :: Env -> Block -> IOExceptEval Val
+evalBlock env (Block stmts) = foldl (\a b -> a >> evalExpr env b) (return NullVal) stmts
 
 evalExpr :: Env -> Expr -> IOExceptEval Val
 evalExpr _   (NumLiteralE val)   = return $ IntVal (fromIntegral val)  -- TODO(pjanczyk): fix integer types

@@ -4,18 +4,20 @@ import Control.Monad.Trans.Except (runExceptT)
 import System.IO (hFlush, stdout)
 import Text.Parsec.Error (ParseError)
 
-import PJLang.Env (Val, EvalException)
-import PJLang.Interpreter (newEnv, evalExpr)
+import PJLang.Env (Val, EvalException, Env)
+import PJLang.Interpreter (newEnv, evalBlock)
 import PJLang.Parser (buildAst)
 
 
 runRepl :: IO ()
-runRepl = sequence_ $ repeat $ do
-    putStr "pjlang> "
-    hFlush stdout
-    code <- getLine
-    result <- exec code
-    putStrLn $ show result
+runRepl = do
+    env <- newEnv
+    sequence_ $ repeat $ do
+        putStr "pjlang> "
+        hFlush stdout
+        code <- getLine
+        result <- exec env code
+        putStrLn $ show result
 
 
 data ExecResult
@@ -24,13 +26,12 @@ data ExecResult
     | ExecEvalError EvalException    
             deriving (Show)        
 
-exec :: String -> IO ExecResult
-exec code = do
+exec :: Env -> String -> IO ExecResult
+exec env code = do
     case buildAst code of
         Left parseError -> return $ ExecParseError parseError
         Right ast       -> do
-            env <- newEnv
-            result <- runExceptT $ evalExpr env ast
-            case result of
-                Left evalException -> return $ ExecEvalError evalException
-                Right val          -> return $ ExecSuccess val
+            result <- runExceptT $ evalBlock env ast
+            return $ case result of
+                Left evalException -> ExecEvalError evalException
+                Right val          -> ExecSuccess val
