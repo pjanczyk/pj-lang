@@ -5,7 +5,7 @@ import System.IO (hFlush, stdout)
 import Text.Parsec.Error (ParseError)
 
 import PJLang.Env (Val, EvalException, Env)
-import PJLang.Interpreter (newEnv, evalExpr)
+import PJLang.Interpreter (newEnv, eval)
 import PJLang.Parser (buildAst)
 
 
@@ -31,7 +31,7 @@ exec env code = do
     case buildAst code of
         Left parseError -> return $ ExecParseError parseError
         Right ast       -> do
-            result <- runExceptT $ evalExpr env ast
+            result <- runExceptT $ eval env ast
             return $ case result of
                 Left evalException -> ExecEvalError evalException
                 Right val          -> ExecSuccess val

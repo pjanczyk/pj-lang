@@ -102,8 +102,11 @@ identifierE = IdentifierE <$> identifier
 parensE :: Parser Expr
 parensE = parens expr
 
+baseE :: Parser Expr
+baseE = nullE <|> boolE <|> intE <|> stringE <|> identifierE <|> parensE
+
 postfixE :: Parser Expr
-postfixE = baseTerm `manyFoldl` suffix
+postfixE = baseE `manyFoldl` suffix
     where
         suffix e = callE e <|> subscriptE e
         callE e = CallE e <$> parens (expr `sepBy` symbol ",")
@@ -114,30 +117,41 @@ expr = buildExpressionParser table (ifElseE <|> whileE <|> postfixE)
     where
         table =
             [[
-                Prefix (PrefixOpE "+" <$ operator "+"),
-                Prefix (PrefixOpE "-" <$ operator "-")
+                mkPrefix "+",
+                mkPrefix "-"
             ], [
-                Infix (InfixOpE "^" <$ operator "^") AssocRight
+                mkInfix "^"  AssocRight
             ], [
-                Infix (InfixOpE "*" <$ operator "*") AssocLeft,
-                Infix (InfixOpE "/" <$ operator "/") AssocLeft,
-                Infix (InfixOpE "%" <$ operator "%") AssocLeft
+                mkInfix "*"  AssocLeft,
+                mkInfix "/"  AssocLeft,
+                mkInfix "%"  AssocLeft
             ], [
-                Infix (InfixOpE "+" <$ operator "+") AssocLeft,
-                Infix (InfixOpE "-" <$ operator "-") AssocLeft
+                mkInfix "+"  AssocLeft,
+                mkInfix "-"  AssocLeft
             ], [
-                Infix (InfixOpE "=" <$ operator "=") AssocRight  
+                mkInfix "="  AssocRight,
+                mkInfix "^=" AssocRight,
+                mkInfix "*=" AssocRight,
+                mkInfix "/=" AssocRight,
+                mkInfix "%=" AssocRight,   
+                mkInfix "+=" AssocRight,
+                mkInfix "-=" AssocRight
+            ], [
+                mkInfix "==" AssocLeft,
+                mkInfix "!=" AssocLeft,
+                mkInfix "<"  AssocLeft,
+                mkInfix ">"  AssocLeft,
+                mkInfix "<=" AssocLeft,
+                mkInfix ">=" AssocLeft
             ]]
+        mkPrefix sym       = Prefix (PrefixOpE sym <$ operator sym)
+        mkInfix  sym assoc = Infix  (InfixOpE sym  <$ operator sym) assoc
 
 stmtList :: Parser Expr
 stmtList = BlockE <$> (expr `sepEndBy` symbol ";")
 
 blockE :: Parser Expr
 blockE = braces stmtList
-
-baseTerm :: Parser Expr
-baseTerm = nullE <|> boolE <|> intE <|> stringE <|> identifierE <|> parensE
-
 
 ifElseE :: Parser Expr
 ifElseE = IfElseE <$> cond <*> then' <*> optionMaybe else'

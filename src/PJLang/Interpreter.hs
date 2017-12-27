@@ -1,8 +1,9 @@
-module PJLang.Interpreter (newEnv, evalExpr) where
+module PJLang.Interpreter (newEnv, eval) where
 
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (throwE)
 import Data.Maybe (fromMaybe)
+import Data.Foldable (foldlM)
 
 import PJLang.Ast
 import PJLang.Env
@@ -15,80 +16,98 @@ newEnv = do
     setVar env "printLine" (NativeFuncVal StdLib.printLine)
     return env
 
-evalExpr :: Env -> Expr -> IOExceptEval Val
+eval :: Env -> Expr -> IOExceptEval Val
 
-evalExpr _   NullE = return NullVal
+eval _env NullE = return NullVal
 
-evalExpr _   (BoolE bool) = return $ BoolVal bool
+eval _env (BoolE bool) = return $ BoolVal bool
 
-evalExpr _   (IntE int) = return $ IntVal (fromIntegral int)  -- TODO(pjanczyk): fix integer types
+eval _env (IntE int) = return $ IntVal (fromIntegral int)  -- TODO(pjanczyk): fix integer types
 
-evalExpr _   (StringE string) = return $ StringVal string
+eval _env (StringE string) = return $ StringVal string
 
-evalExpr env (IdentifierE name) = lift $ fromMaybe NullVal <$> getVar env name
+eval env (IdentifierE name) = lift $ fromMaybe NullVal <$> getVar env name
 
-evalExpr env (PrefixOpE op expr) = do
-    val <- evalExpr env expr
-    case (op, val) of
-        ("+", IntVal _)   -> return val
+eval env (PrefixOpE op e) = do
+    v <- eval env e
+    case (op, v) of
+        ("+", IntVal _)   -> return v
         ("-", IntVal int) -> return $ IntVal (-int)
         _                 -> throwE $ EvalException $
             "Prefix operator `" ++ op ++
-            "` cannot be applied to the type `" ++ valType val ++
+            "` cannot be applied to the type `" ++ valType v ++
             "`"
 
-evalExpr env (InfixOpE "=" lExpr rExpr) = case lExpr of
+eval env (InfixOpE op lhsE rhsE)
+    | op == "=" = case lhsE of
         IdentifierE name -> do
-            val <- evalExpr env rExpr
-            lift $ setVar env name val
-            return NullVal
+            rhsV <- eval env rhsE
+            lift $ setVar env name rhsV
+            return rhsV
         _                -> throwE $ EvalException $
             "The left-hand side of the operator `=` must be an identifier"
+    | isInPlaceOp op = case lhsE of
+        IdentifierE name -> do
+            lhsV <- lift $ fromMaybe NullVal <$> getVar env name
+            rhsV <- eval env rhsE
+            resV <- applyInfixOp (removeInPlaceness op) lhsV rhsV
+            lift $ setVar env name resV
+            return rhsV
+        _                -> throwE $ EvalException $
+            "The left-hand side of the operator `" ++ op ++
+            "` must be an identifier"
+    | otherwise = do
+        lhsV <- eval env lhsE
+        rhsV <- eval env rhsE
+        applyInfixOp op lhsV rhsV
+    where
+        isInPlaceOp :: Op -> Bool
+        isInPlaceOp op = op `elem` ["^=", "*=", "/=", "%=", "+=", "-="]
 
-evalExpr env (InfixOpE op lExpr rExpr) = do
-    lVal <- evalExpr env lExpr
-    rVal <- evalExpr env rExpr
-    case (op, lVal, rVal) of
-        ("^", IntVal lInt, IntVal rInt) -> return $ IntVal (lInt ^ rInt)
-        ("*", IntVal lInt, IntVal rInt) -> return $ IntVal (lInt * rInt)
-        ("/", IntVal lInt, IntVal rInt) -> return $ IntVal (lInt `quot` rInt)
-        ("%", IntVal lInt, IntVal rInt) -> return $ IntVal (lInt `rem` rInt)
-        ("+", IntVal lInt, IntVal rInt) -> return $ IntVal (lInt + rInt)
-        ("-", IntVal lInt, IntVal rInt) -> return $ IntVal (lInt - rInt)
-        _                               -> throwE $ EvalException $
+        removeInPlaceness :: Op -> Op
+        removeInPlaceness op = init op   -- remove trailing '='
+
+        applyInfixOp :: Op -> Val -> Val -> IOExceptEval Val
+        applyInfixOp "^" (IntVal l) (IntVal r) = return $ IntVal (l ^ r)
+        applyInfixOp "*" (IntVal l) (IntVal r) = return $ IntVal (l * r)
+        applyInfixOp "/" (IntVal l) (IntVal r) = return $ IntVal (l `quot` r)
+        applyInfixOp "%" (IntVal l) (IntVal r) = return $ IntVal (l `rem` r)
+        applyInfixOp "+" (IntVal l) (IntVal r) = return $ IntVal (l + r)
+        applyInfixOp "-" (IntVal l) (IntVal r) = return $ IntVal (l - r)
+        applyInfixOp op   l          r         = throwE $ EvalException $
             "Infix operator `" ++ op ++
-            "` cannot be applied to the types `" ++ valType lVal ++
-            "` and " ++ valType rVal ++
+            "` cannot be applied to the types `" ++ valType l ++
+            "` and `" ++ valType r ++
             "`"
 
-evalExpr env (CallE calleeExpr argsExpr) = do
-    calleeVal <- evalExpr env calleeExpr
-    argsVal <- evalExpr env `mapM` argsExpr
-    case calleeVal of
-        NativeFuncVal func -> func env argsVal   
+eval env (CallE calleeE argsE) = do
+    calleeV <- eval env calleeE
+    argsV <- eval env `mapM` argsE
+    case calleeV of
+        NativeFuncVal func -> func env argsV   
         _                  -> throwE $ EvalException $
             "Only a native function can be called"
 
-evalExpr env (SubscriptE lExpr rExpr) = undefined  -- TODO(pjanczyk)
+eval _env (SubscriptE _lhsE _rhsE) = undefined  -- TODO(pjanczyk)
 
-evalExpr env (BlockE stmts) = foldl (\a b -> a >> evalExpr env b) (return NullVal) stmts
+eval env (BlockE stmts) = foldlM (\_ b -> eval env b) NullVal stmts
 
-evalExpr env (IfElseE condExpr thenExpr maybeElseExpr) = do
-    condVal <- evalExpr env condExpr
+eval env (IfElseE condExpr thenExpr maybeElseExpr) = do
+    condVal <- eval env condExpr
     case condVal of
-        BoolVal True  -> evalExpr env thenExpr
+        BoolVal True  -> eval env thenExpr
         BoolVal False -> case maybeElseExpr of
-            Just elseExpr  -> evalExpr env elseExpr
+            Just elseExpr  -> eval env elseExpr
             Nothing        -> return NullVal
         _             -> throwE $ EvalException $
             "The condition in `if` expression must be of type `bool`"
 
-evalExpr env (WhileE condExpr bodyExpr) = do
-    condVal <- evalExpr env condExpr
+eval env (WhileE condExpr bodyExpr) = do
+    condVal <- eval env condExpr
     case condVal of
         BoolVal True  -> do
-            evalExpr env bodyExpr
-            evalExpr env (WhileE condExpr bodyExpr)
+            eval env bodyExpr
+            eval env (WhileE condExpr bodyExpr)
         BoolVal False -> return NullVal
         _             -> throwE $ EvalException $
             "The condition in `while` expression must be of type `bool`"
