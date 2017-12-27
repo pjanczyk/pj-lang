@@ -1,18 +1,6 @@
 module PJLang.Ast where
 
-data UnaryOp
-    = UnaryPlus
-    | UnaryMinus
-        deriving (Eq, Show)
-
-data BinaryOp
-    = BinaryPow
-    | BinaryMul
-    | BinaryDiv
-    | BinaryMod
-    | BinaryAdd
-    | BinarySub
-        deriving (Eq, Show) 
+type Op = String
 
 data Expr
     = NullE
@@ -20,25 +8,11 @@ data Expr
     | IntE Integer
     | StringE String
     | IdentifierE String
-    | ParensE Expr
-    | PrefixOpE UnaryOp Expr
-    | BinaryOpE BinaryOp Expr Expr
+    | PrefixOpE Op Expr
+    | InfixOpE Op Expr Expr
     | CallE Expr [Expr]
     | SubscriptE Expr Expr
-    | AssignE Expr Expr
     | BlockE [Expr]
     | IfElseE Expr Expr (Maybe Expr)
     | WhileE Expr Expr
         deriving (Eq, Show)
-
-unaryOpToString :: UnaryOp -> String
-unaryOpToString UnaryPlus  = "prefix +"
-unaryOpToString UnaryMinus = "prefix -"
-
-binaryOpToString :: BinaryOp -> String
-binaryOpToString BinaryPow = "infix ^"
-binaryOpToString BinaryMul = "infix *"
-binaryOpToString BinaryDiv = "infix /"
-binaryOpToString BinaryMod = "infix %"
-binaryOpToString BinaryAdd = "infix +"
-binaryOpToString BinarySub = "infix -"

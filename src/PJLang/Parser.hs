@@ -9,10 +9,18 @@ import qualified Text.Parsec.Token as T
 import Text.Parsec.String (Parser)
 import Text.Parsec.String.Char (oneOf, digit, string, letter, char, alphaNum)
 import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy, sepEndBy, optionMaybe)
-import Text.Parsec.String.Expr
+import Text.Parsec.String.Expr (Operator(Infix, Prefix), Assoc(AssocLeft, AssocRight), buildExpressionParser)
 import Text.Parsec.String.Parsec (parse, try)
 
 import PJLang.Ast
+
+
+buildAst :: String -> Either ParseError Expr
+buildAst code = parseWithEof stmtList code
+
+--------------------------------------------------
+-- Token parsers
+--------------------------------------------------
 
 tokenParser :: T.TokenParser ()
 tokenParser = T.makeTokenParser $
@@ -29,10 +37,6 @@ tokenParser = T.makeTokenParser $
         T.reservedNames   = ["if", "else", "then", "while", "do", "null", "true", "false"],
         T.caseSensitive   = True
     }
-
---------------------------------------------------
--- Token parsers
---------------------------------------------------
 
 identifier :: Parser String
 identifier = T.identifier tokenParser
@@ -68,47 +72,17 @@ brackets :: Parser a -> Parser a
 brackets p = between (symbol "[") (symbol "]") p
 
 --------------------------------------------------
--- AST parsers
+-- Helper functions
 --------------------------------------------------
 
-buildAst :: String -> Either ParseError Expr
-buildAst code = parseWithEof stmtList code
-
-blockE :: Parser Expr
-blockE = braces stmtList
-
-stmtList :: Parser Expr
-stmtList = BlockE <$> (expr `sepEndBy` symbol ";")
-
-expr :: Parser Expr
-expr = buildExpressionParser table term
-
-baseTerm :: Parser Expr
-baseTerm = nullE <|> boolE <|> intE <|> stringE <|> identifierE <|> parensE
-
-term :: Parser Expr
-term = ifElseE <|> whileE <|> postfixE
-
-table :: OperatorTable Expr
-table =
-    [[
-        prefix UnaryPlus "+",
-        prefix UnaryMinus "-"
-    ], [
-        binary BinaryPow "^" AssocRight
-    ], [
-        binary BinaryMul "*" AssocLeft,
-        binary BinaryDiv "/" AssocLeft,
-        binary BinaryMod "%" AssocLeft
-    ], [
-        binary BinaryAdd "+" AssocLeft,
-        binary BinarySub "-" AssocLeft
-    ], [
-        Infix (AssignE <$ symbol "=") AssocRight  
-    ]]
+manyFoldl :: Parser Expr -> (Expr -> Parser Expr) -> Parser Expr
+manyFoldl baseParser suffixParser = baseParser >>= tryAddSuffix
     where
-        prefix op name = Prefix (PrefixOpE op <$ symbol name)
-        binary op name assoc = Infix (BinaryOpE op <$ symbol name) assoc
+        tryAddSuffix base = (suffixParser base >>= tryAddSuffix) <|> return base
+
+--------------------------------------------------
+-- AST parsers
+--------------------------------------------------
 
 nullE :: Parser Expr
 nullE = NullE <$ keyword "null"
@@ -128,17 +102,42 @@ identifierE = IdentifierE <$> identifier
 parensE :: Parser Expr
 parensE = parens expr
 
-leftRecursive :: Parser Expr -> (Expr -> Parser Expr) -> Parser Expr
-leftRecursive baseParser suffixParser = baseParser >>= tryAddSuffix
-    where
-        tryAddSuffix base = (suffixParser base >>= tryAddSuffix) <|> return base
-
 postfixE :: Parser Expr
-postfixE = leftRecursive baseTerm suffix
-        where
-            suffix e = callE e <|> subscriptE e
-            callE e = CallE e <$> parens (expr `sepBy` symbol ",")
-            subscriptE e = SubscriptE e <$> brackets expr
+postfixE = baseTerm `manyFoldl` suffix
+    where
+        suffix e = callE e <|> subscriptE e
+        callE e = CallE e <$> parens (expr `sepBy` symbol ",")
+        subscriptE e = SubscriptE e <$> brackets expr
+
+expr :: Parser Expr
+expr = buildExpressionParser table (ifElseE <|> whileE <|> postfixE)
+    where
+        table =
+            [[
+                Prefix (PrefixOpE "+" <$ operator "+"),
+                Prefix (PrefixOpE "-" <$ operator "-")
+            ], [
+                Infix (InfixOpE "^" <$ operator "^") AssocRight
+            ], [
+                Infix (InfixOpE "*" <$ operator "*") AssocLeft,
+                Infix (InfixOpE "/" <$ operator "/") AssocLeft,
+                Infix (InfixOpE "%" <$ operator "%") AssocLeft
+            ], [
+                Infix (InfixOpE "+" <$ operator "+") AssocLeft,
+                Infix (InfixOpE "-" <$ operator "-") AssocLeft
+            ], [
+                Infix (InfixOpE "=" <$ operator "=") AssocRight  
+            ]]
+
+stmtList :: Parser Expr
+stmtList = BlockE <$> (expr `sepEndBy` symbol ";")
+
+blockE :: Parser Expr
+blockE = braces stmtList
+
+baseTerm :: Parser Expr
+baseTerm = nullE <|> boolE <|> intE <|> stringE <|> identifierE <|> parensE
+
 
 ifElseE :: Parser Expr
 ifElseE = IfElseE <$> cond <*> then' <*> optionMaybe else'
