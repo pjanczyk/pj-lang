@@ -12,9 +12,14 @@ import qualified PJLang.StdLib as StdLib
 newEnv :: IO Env
 newEnv = do
     env <- empty
-    setVar env "print" (NativeFuncVal StdLib.print)
-    setVar env "printLine" (NativeFuncVal StdLib.printLine)
+    (uncurry $ setVar env) `mapM_` builtins
     return env
+    where
+        builtins = [
+                ("print",     NativeFuncVal StdLib.print),
+                ("printLine", NativeFuncVal StdLib.printLine),
+                ("readLine",  NativeFuncVal StdLib.readLine)
+            ]
 
 eval :: Env -> Expr -> IOExceptEval Val
 
@@ -62,10 +67,10 @@ eval env (InfixOpE op lhsE rhsE)
         applyInfixOp op lhsV rhsV
     where
         isInPlaceOp :: Op -> Bool
-        isInPlaceOp op = op `elem` ["^=", "*=", "/=", "%=", "+=", "-="]
+        isInPlaceOp op' = op' `elem` ["^=", "*=", "/=", "%=", "+=", "-="]
 
         removeInPlaceness :: Op -> Op
-        removeInPlaceness op = init op   -- remove trailing '='
+        removeInPlaceness op' = init op'   -- remove trailing '='
 
         applyInfixOp :: Op -> Val -> Val -> IOExceptEval Val
         applyInfixOp "^" (IntVal l) (IntVal r) = return $ IntVal (l ^ r)
@@ -74,8 +79,8 @@ eval env (InfixOpE op lhsE rhsE)
         applyInfixOp "%" (IntVal l) (IntVal r) = return $ IntVal (l `rem` r)
         applyInfixOp "+" (IntVal l) (IntVal r) = return $ IntVal (l + r)
         applyInfixOp "-" (IntVal l) (IntVal r) = return $ IntVal (l - r)
-        applyInfixOp op   l          r         = throwE $ EvalException $
-            "Infix operator `" ++ op ++
+        applyInfixOp op'  l          r         = throwE $ EvalException $
+            "Infix operator `" ++ op' ++
             "` cannot be applied to the types `" ++ valType l ++
             "` and `" ++ valType r ++
             "`"
