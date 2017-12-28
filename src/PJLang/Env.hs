@@ -14,9 +14,9 @@ data Val
 
 instance Show Val where
     show NullVal            = "null"
-    show (BoolVal bool)     = (if bool then "true" else "false") 
+    show (BoolVal bool)     = if bool then "true" else "false"
     show (IntVal int)       = show int
-    show (StringVal string) = ("\"" ++ string ++ "\"")
+    show (StringVal string) = "\"" ++ string ++ "\""
     show (NativeFuncVal _)  = "<native func>"
 
 valType :: Val -> String
