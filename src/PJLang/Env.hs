@@ -2,6 +2,7 @@ module PJLang.Env where
 
 import Control.Monad.Trans.Except (Except, ExceptT)
 
+import qualified PJLang.Ast as Ast (Expr)
 import qualified PJLang.Util.MutableMap as MMap
 
 
@@ -10,7 +11,8 @@ data Val
     | BoolVal Bool
     | IntVal Int
     | StringVal String
-    | NativeFuncVal (Env -> [Val] -> IOExceptEval Val) 
+    | NativeFuncVal (Env -> [Val] -> IOExceptEval Val)
+    | UserFuncVal [String] Ast.Expr
 
 instance Show Val where
     show NullVal            = "null"
@@ -18,6 +20,7 @@ instance Show Val where
     show (IntVal int)       = show int
     show (StringVal string) = "\"" ++ string ++ "\""
     show (NativeFuncVal _)  = "<native func>"
+    show (UserFuncVal _ _)    = "<user func>"
 
 valType :: Val -> String
 valType NullVal           = "null"
@@ -25,6 +28,7 @@ valType (IntVal _)        = "int"
 valType (BoolVal _)       = "bool"
 valType (StringVal _)     = "string"
 valType (NativeFuncVal _) = "native func"
+valType (UserFuncVal _ _) = "user func"
 
 type Scope = MMap.MutableMap String Val
 

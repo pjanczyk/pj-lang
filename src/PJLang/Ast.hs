@@ -10,9 +10,19 @@ data Expr
     | IdentifierE String
     | PrefixOpE Op Expr
     | InfixOpE Op Expr Expr
-    | CallE Expr [Expr]
+    | CallE
+        Expr   -- callee
+        [Expr] -- arguments
     | SubscriptE Expr Expr
     | BlockE [Expr]
-    | IfElseE Expr Expr (Maybe Expr)
-    | WhileE Expr Expr
+    | IfElseE
+        Expr         -- condition
+        Expr         -- then body
+        (Maybe Expr) -- else body
+    | WhileE
+        Expr -- condition
+        Expr -- body
+    | FuncE
+        [String] -- parameters
+        Expr     -- body
         deriving (Eq, Show)

@@ -40,7 +40,7 @@ runRepl = newEnv >>= loop
                     line <- getLine
                     result <- execCode env line
                     case result of
-                        ExecSuccess val                   -> putStrLn (" " ++ show val)
+                        ExecSuccess val                   -> putStrLn (":: " ++ show val)
                         ExecParseError parseError         -> putStrLn ("Invalid syntax: " ++ show parseError)
                         ExecEvalError (EvalException msg) -> putStrLn ("Runtime exception: " ++ msg)    
                     loop env

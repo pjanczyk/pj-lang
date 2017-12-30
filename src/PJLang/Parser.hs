@@ -113,7 +113,7 @@ postfixE = baseE `manyFoldl` suffix
         subscriptE e = SubscriptE e <$> brackets expr
 
 expr :: Parser Expr
-expr = buildExpressionParser table (ifElseE <|> whileE <|> postfixE)
+expr = buildExpressionParser table (ifElseE <|> whileE <|> funcE <|> postfixE)
     where
         table =
             [[
@@ -165,3 +165,11 @@ whileE = WhileE <$> cond <*> body
     where
         cond = keyword "while" *> expr
         body = (keyword "do" *> expr) <|> blockE
+
+funcE :: Parser Expr
+funcE = FuncE <$> params <*> body
+    where
+        params = try $ (singleParam <|> multipleParams) <* keyword "=>"
+        singleParam = (: []) <$> identifier
+        multipleParams = parens (identifier `sepBy` symbol ",")
+        body = expr

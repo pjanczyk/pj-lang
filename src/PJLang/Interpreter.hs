@@ -89,9 +89,19 @@ eval env (CallE calleeE argsE) = do
     calleeV <- eval env calleeE
     argsV <- eval env `mapM` argsE
     case calleeV of
-        NativeFuncVal func -> func env argsV   
-        _                  -> throwE $ EvalException $
-            "Only a native function can be called"
+        NativeFuncVal func          -> func env argsV
+        UserFuncVal params bodyExpr ->
+            if length argsV /= length params
+                then throwE $ EvalException $
+                    "Invalid number of arguments. Expected " ++ show (length params) ++
+                    " argument(s)"
+                else do
+                    newScope <- lift empty
+                    lift $ (uncurry $ setVar newScope) `mapM_` (params `zip` argsV)
+                    eval newScope bodyExpr
+            
+        _                           -> throwE $ EvalException $
+            "Only a function can be called"
 
 eval _env (SubscriptE _lhsE _rhsE) = undefined  -- TODO(pjanczyk)
 
@@ -116,3 +126,5 @@ eval env (WhileE condExpr bodyExpr) = do
         BoolVal False -> return NullVal
         _             -> throwE $ EvalException $
             "The condition in `while` expression must be of type `bool`"
+
+eval _env (FuncE params bodyExpr) = return $ UserFuncVal params bodyExpr
