@@ -22,7 +22,7 @@ data Expr
     | WhileE
         Expr -- condition
         Expr -- body
-    | FuncE
+    | LambdaE
         [String] -- parameters
         Expr     -- body
         deriving (Eq, Show)

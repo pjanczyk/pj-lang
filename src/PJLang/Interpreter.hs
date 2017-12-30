@@ -5,14 +5,15 @@ import Control.Monad.Trans.Except (throwE)
 import Data.Maybe (fromMaybe)
 import Data.Foldable (foldlM)
 
-import PJLang.Ast
+import PJLang.Ast (Expr(..), Op)
 import PJLang.Env
 import qualified PJLang.StdLib as StdLib
 
 newEnv :: IO Env
 newEnv = do
-    env <- empty
-    (uncurry $ setVar env) `mapM_` builtins
+    globalScope <- newScope
+    let env = Env [globalScope]
+    setVar env `mapM_` builtins
     return env
     where
         builtins = [
@@ -47,7 +48,7 @@ eval env (InfixOpE op lhsE rhsE)
     | op == "=" = case lhsE of
         IdentifierE name -> do
             rhsV <- eval env rhsE
-            lift $ setVar env name rhsV
+            lift $ setVar env (name, rhsV)
             return rhsV
         _                -> throwE $ EvalException $
             "The left-hand side of the operator `=` must be an identifier"
@@ -56,7 +57,7 @@ eval env (InfixOpE op lhsE rhsE)
             lhsV <- lift $ fromMaybe NullVal <$> getVar env name
             rhsV <- eval env rhsE
             resV <- applyInfixOp (removeInPlaceness op) lhsV rhsV
-            lift $ setVar env name resV
+            lift $ setVar env (name, resV)
             return rhsV
         _                -> throwE $ EvalException $
             "The left-hand side of the operator `" ++ op ++
@@ -89,18 +90,18 @@ eval env (CallE calleeE argsE) = do
     calleeV <- eval env calleeE
     argsV <- eval env `mapM` argsE
     case calleeV of
-        NativeFuncVal func          -> func env argsV
-        UserFuncVal params bodyExpr ->
+        NativeFuncVal func             -> func env argsV
+        LambdaVal closure params bodyExpr ->
             if length argsV /= length params
                 then throwE $ EvalException $
                     "Invalid number of arguments. Expected " ++ show (length params) ++
                     " argument(s)"
                 else do
-                    newScope <- lift empty
-                    lift $ (uncurry $ setVar newScope) `mapM_` (params `zip` argsV)
-                    eval newScope bodyExpr
-            
-        _                           -> throwE $ EvalException $
+                    innerScope <- lift newScope
+                    let env' = Env (innerScope:closure)
+                    lift $ (scopeSetVar innerScope) `mapM_` (params `zip` argsV)
+                    eval env' bodyExpr
+        _ -> throwE $ EvalException $
             "Only a function can be called"
 
 eval _env (SubscriptE _lhsE _rhsE) = undefined  -- TODO(pjanczyk)
@@ -127,4 +128,4 @@ eval env (WhileE condExpr bodyExpr) = do
         _             -> throwE $ EvalException $
             "The condition in `while` expression must be of type `bool`"
 
-eval _env (FuncE params bodyExpr) = return $ UserFuncVal params bodyExpr
+eval (Env scopes) (LambdaE params bodyExpr) = return $ LambdaVal scopes params bodyExpr
