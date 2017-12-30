@@ -92,11 +92,18 @@ eval env (InfixOpE op lhsE rhsE)
             "` and `" ++ valType r ++
             "`"
 
+        valsEq :: Val -> Val -> Bool
+        valsEq  NullVal       NullVal      = True
+        valsEq (BoolVal a)   (BoolVal b)   = a == b
+        valsEq (IntVal a)    (IntVal b)    = a == b
+        valsEq (StringVal a) (StringVal b) = a == b
+        valsEq  _             _            = False   -- TODO(pjanczyk): NativeFuncVal, LambdaVal
+
 eval env (CallE calleeE argsE) = do
     calleeV <- eval env calleeE
     argsV <- eval env `mapM` argsE
     case calleeV of
-        NativeFuncVal func             -> func env argsV
+        NativeFuncVal func -> func env argsV
         LambdaVal closure params bodyExpr ->
             if length argsV /= length params
                 then throwE $ EvalException $
@@ -135,10 +142,3 @@ eval env (WhileE condExpr bodyExpr) = do
             "The condition in `while` expression must be of type `bool`"
 
 eval (Env scopes) (LambdaE params bodyExpr) = return $ LambdaVal scopes params bodyExpr
-
-valsEq :: Val -> Val -> Bool
-valsEq  NullVal       NullVal      = True
-valsEq (BoolVal a)   (BoolVal b)   = a == b
-valsEq (IntVal a)    (IntVal b)    = a == b
-valsEq (StringVal a) (StringVal b) = a == b
-valsEq  _             _            = False   -- TODO(pjanczyk): NativeFuncVal, LambdaVal
