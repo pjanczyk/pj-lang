@@ -74,13 +74,19 @@ eval env (InfixOpE op lhsE rhsE)
         removeInPlaceness op' = init op'   -- remove trailing '='
 
         applyInfixOp :: Op -> Val -> Val -> IOExceptEval Val
-        applyInfixOp "^" (IntVal l) (IntVal r) = return $ IntVal (l ^ r)
-        applyInfixOp "*" (IntVal l) (IntVal r) = return $ IntVal (l * r)
-        applyInfixOp "/" (IntVal l) (IntVal r) = return $ IntVal (l `quot` r)
-        applyInfixOp "%" (IntVal l) (IntVal r) = return $ IntVal (l `rem` r)
-        applyInfixOp "+" (IntVal l) (IntVal r) = return $ IntVal (l + r)
-        applyInfixOp "-" (IntVal l) (IntVal r) = return $ IntVal (l - r)
-        applyInfixOp op'  l          r         = throwE $ EvalException $
+        applyInfixOp "^"  (IntVal l) (IntVal r) = return $ IntVal (l ^ r)
+        applyInfixOp "*"  (IntVal l) (IntVal r) = return $ IntVal (l * r)
+        applyInfixOp "/"  (IntVal l) (IntVal r) = return $ IntVal (l `quot` r)
+        applyInfixOp "%"  (IntVal l) (IntVal r) = return $ IntVal (l `rem` r)
+        applyInfixOp "+"  (IntVal l) (IntVal r) = return $ IntVal (l + r)
+        applyInfixOp "-"  (IntVal l) (IntVal r) = return $ IntVal (l - r)
+        applyInfixOp "=="  l          r         = return $ BoolVal (valsEq l r)
+        applyInfixOp "!="  l          r         = return $ BoolVal (not (valsEq l r))
+        applyInfixOp "<"  (IntVal l) (IntVal r) = return $ BoolVal (l < r)
+        applyInfixOp ">"  (IntVal l) (IntVal r) = return $ BoolVal (l > r)
+        applyInfixOp "<=" (IntVal l) (IntVal r) = return $ BoolVal (l <= r)
+        applyInfixOp ">=" (IntVal l) (IntVal r) = return $ BoolVal (l >= r)
+        applyInfixOp op'   l          r         = throwE $ EvalException $
             "Infix operator `" ++ op' ++
             "` cannot be applied to the types `" ++ valType l ++
             "` and `" ++ valType r ++
@@ -129,3 +135,10 @@ eval env (WhileE condExpr bodyExpr) = do
             "The condition in `while` expression must be of type `bool`"
 
 eval (Env scopes) (LambdaE params bodyExpr) = return $ LambdaVal scopes params bodyExpr
+
+valsEq :: Val -> Val -> Bool
+valsEq  NullVal       NullVal      = True
+valsEq (BoolVal a)   (BoolVal b)   = a == b
+valsEq (IntVal a)    (IntVal b)    = a == b
+valsEq (StringVal a) (StringVal b) = a == b
+valsEq  _             _            = False   -- TODO(pjanczyk): NativeFuncVal, LambdaVal
