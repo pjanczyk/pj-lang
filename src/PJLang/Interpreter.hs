@@ -95,19 +95,20 @@ evalExpr env (InfixOpE op lhsE rhsE)
         removeInPlaceness op' = init op'   -- remove trailing '='
 
         applyInfixOp :: Op -> Val -> Val -> IOExceptEval Val
-        applyInfixOp "^"  (IntVal l) (IntVal r) = return $ IntVal (l ^ r)
-        applyInfixOp "*"  (IntVal l) (IntVal r) = return $ IntVal (l * r)
-        applyInfixOp "/"  (IntVal l) (IntVal r) = return $ IntVal (l `quot` r)
-        applyInfixOp "%"  (IntVal l) (IntVal r) = return $ IntVal (l `rem` r)
-        applyInfixOp "+"  (IntVal l) (IntVal r) = return $ IntVal (l + r)
-        applyInfixOp "-"  (IntVal l) (IntVal r) = return $ IntVal (l - r)
-        applyInfixOp "=="  l          r         = return $ BoolVal (valsEq l r)
-        applyInfixOp "!="  l          r         = return $ BoolVal (not (valsEq l r))
-        applyInfixOp "<"  (IntVal l) (IntVal r) = return $ BoolVal (l < r)
-        applyInfixOp ">"  (IntVal l) (IntVal r) = return $ BoolVal (l > r)
-        applyInfixOp "<=" (IntVal l) (IntVal r) = return $ BoolVal (l <= r)
-        applyInfixOp ">=" (IntVal l) (IntVal r) = return $ BoolVal (l >= r)
-        applyInfixOp op'   l          r         = throwE $ EvalException $
+        applyInfixOp "^"  (IntVal l)    (IntVal r)    = return $ IntVal (l ^ r)
+        applyInfixOp "*"  (IntVal l)    (IntVal r)    = return $ IntVal (l * r)
+        applyInfixOp "/"  (IntVal l)    (IntVal r)    = return $ IntVal (l `quot` r)
+        applyInfixOp "%"  (IntVal l)    (IntVal r)    = return $ IntVal (l `rem` r)
+        applyInfixOp "+"  (IntVal l)    (IntVal r)    = return $ IntVal (l + r)
+        applyInfixOp "+"  (StringVal l) (StringVal r) = return $ StringVal (l ++ r)
+        applyInfixOp "-"  (IntVal l)    (IntVal r)    = return $ IntVal (l - r)
+        applyInfixOp "=="  l             r            = return $ BoolVal (valsEq l r)
+        applyInfixOp "!="  l             r            = return $ BoolVal (not (valsEq l r))
+        applyInfixOp "<"  (IntVal l)    (IntVal r)    = return $ BoolVal (l < r)
+        applyInfixOp ">"  (IntVal l)    (IntVal r)    = return $ BoolVal (l > r)
+        applyInfixOp "<=" (IntVal l)    (IntVal r)    = return $ BoolVal (l <= r)
+        applyInfixOp ">=" (IntVal l)    (IntVal r)    = return $ BoolVal (l >= r)
+        applyInfixOp op'   l             r            = throwE $ EvalException $
             "Infix operator `" ++ op' ++
             "` cannot be applied to the types `" ++ valType l ++
             "` and `" ++ valType r ++
