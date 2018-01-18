@@ -74,7 +74,7 @@ envFindVarScope (Env scopes) varName = findVarScope scopes
                 else findVarScope parentScopes
 
 envCurrentScope :: Env -> Scope
-envCurrentScope (Env (scope:parentScopes)) = scope
+envCurrentScope (Env scopes) = head scopes
 
 getVar :: Env -> String -> IO (Maybe Val)
 getVar env name = envFindVarScope env name >>= \x -> case x of
