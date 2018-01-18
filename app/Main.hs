@@ -1,31 +1,14 @@
 module Main where
 
 import Control.Exception.Base (displayException)
-import Control.Monad.Trans.Except (runExceptT)
 import System.Environment (getArgs)
 import System.IO (isEOF, hFlush, stdout)
 import System.IO.Error (tryIOError)
 import Text.Parsec.Error (ParseError)
 
 import PJLang.Env (Val, EvalException(..), Env)
-import PJLang.Interpreter (newEnv, eval)
+import PJLang.Interpreter (ExecResult(..), newEnv, evalCode)
 import PJLang.Parser (buildAst)
-
-data ExecResult
-    = ExecSuccess Val
-    | ExecParseError ParseError
-    | ExecEvalError EvalException    
-            deriving (Show)    
-
-execCode :: Env -> String -> IO ExecResult
-execCode env code = do
-    case buildAst code of
-        Left parseError -> return $ ExecParseError parseError
-        Right ast       -> do
-            result <- runExceptT $ eval env ast
-            return $ case result of
-                Left evalException -> ExecEvalError evalException
-                Right val          -> ExecSuccess val
 
 runRepl :: IO ()
 runRepl = newEnv >>= loop
@@ -38,7 +21,7 @@ runRepl = newEnv >>= loop
                 then putStrLn ""
                 else do
                     line <- getLine
-                    result <- execCode env line
+                    result <- evalCode env line
                     case result of
                         ExecSuccess val                   -> putStrLn (":: " ++ show val)
                         ExecParseError parseError         -> putStrLn ("Invalid syntax: " ++ show parseError)
@@ -56,7 +39,7 @@ main = do
                 Left err      -> putStrLn ("Failed to read file \"" ++ filePath ++ "\": " ++ displayException err)
                 Right content -> do
                     env <- newEnv
-                    result <- execCode env content
+                    result <- evalCode env content
                     case result of
                         ExecSuccess _val                  -> return ()
                         ExecParseError parseError         -> putStrLn ("Invalid syntax: " ++ show parseError)
