@@ -1,21 +1,31 @@
 module PJLang.Parser.Internal where
 
 import Control.Monad (void)
-import Control.Applicative ((<$>), (<$), (<*>), (<*), (*>), (<|>), many)
+import Control.Applicative ((<$>), (<$), (<*>), (<*), (*>), (<|>))
 import Data.Char (ord)
-import FunctionsAndTypesForParsing (parseWithEof)
-import Text.Parsec (ParseError)
-import qualified Text.Parsec.Token as T
+import Text.Parsec (ParseError, parse, try)
+import Text.Parsec.Char (oneOf, digit, string, letter, char, alphaNum)
+import Text.Parsec.Combinator (eof, manyTill, anyToken, many1, between, sepBy, sepEndBy, optionMaybe)
+import Text.Parsec.Expr (Operator(Infix, Prefix), Assoc(AssocLeft, AssocRight), buildExpressionParser)
 import Text.Parsec.String (Parser)
-import Text.Parsec.String.Char (oneOf, digit, string, letter, char, alphaNum)
-import Text.Parsec.String.Combinator (eof, manyTill, anyToken, many1, between, sepBy, sepEndBy, optionMaybe)
-import Text.Parsec.String.Expr (Operator(Infix, Prefix), Assoc(AssocLeft, AssocRight), buildExpressionParser)
-import Text.Parsec.String.Parsec (parse, try)
+import qualified Text.Parsec.Token as T
 
 import PJLang.Ast
 
+
 buildAst :: String -> Either ParseError Expr
 buildAst code = parseWithEof stmtList code
+
+--------------------------------------------------
+-- Helper functions
+--------------------------------------------------
+
+parseWithEof :: Parser a -> String -> Either ParseError a
+parseWithEof p = parse (p <* eof) ""
+
+parseWithLeftOver :: Parser a -> String -> Either ParseError (a,String)
+parseWithLeftOver p = parse ((,) <$> p <*> leftOver) ""
+  where leftOver = manyTill anyToken eof
 
 --------------------------------------------------
 -- Token parsers

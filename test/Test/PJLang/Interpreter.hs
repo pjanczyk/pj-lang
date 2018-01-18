@@ -34,8 +34,8 @@ tests = "Interpreter tests" ~: test [
          assertEvalSuccess "(-> 1)()" (IntVal 1),      
          assertEvalSuccess "(x -> x + 1)(2)" (IntVal 3),  
          assertEvalSuccess "((a, b) -> a * b)(2, 3)" (IntVal 6),
-         assertEvalSuccess "if True then 1" (IntVal 1),
-         assertEvalSuccess "if False then 1" NullVal,
+         assertEvalSuccess "if true then 1" (IntVal 1),
+         assertEvalSuccess "if false then 1" NullVal,
          assertEvalException "if 1 then 1",
-         assertEvalSuccess "while False { }" NullVal
+         assertEvalSuccess "while false { }" NullVal
     ]

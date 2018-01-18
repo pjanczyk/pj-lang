@@ -4,11 +4,10 @@ import Control.Exception.Base (displayException)
 import System.Environment (getArgs)
 import System.IO (isEOF, hFlush, stdout)
 import System.IO.Error (tryIOError)
-import Text.Parsec.Error (ParseError)
 
-import PJLang.Env (Val, EvalException(..), Env)
+import PJLang.Env (EvalException(..))
 import PJLang.Interpreter (ExecResult(..), newEnv, evalCode)
-import PJLang.Parser (buildAst)
+
 
 runRepl :: IO ()
 runRepl = newEnv >>= loop

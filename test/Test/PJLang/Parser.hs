@@ -1,7 +1,6 @@
 module Test.PJLang.Parser (tests) where
 
 import Data.Either (either)
-import FunctionsAndTypesForParsing (parseWithEof)
 import PJLang.Ast (Expr(..))
 import qualified PJLang.Parser.Internal as PI
 import Test.HUnit (Test, test, (~:), (~?=))
@@ -9,7 +8,7 @@ import Text.Parsec.String (Parser)
 
 
 parseMaybe :: Parser a -> String -> Maybe a
-parseMaybe parser input = either (const Nothing) Just $ parseWithEof parser input
+parseMaybe parser input = either (const Nothing) Just $ PI.parseWithEof parser input
 
 tests :: Test
 tests = "Parser tests" ~: test [
