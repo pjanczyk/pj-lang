@@ -1,5 +1,6 @@
 module PJLang.Interpreter (newEnv, eval) where
 
+import Control.Monad (when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (throwE)
 import Data.Maybe (fromMaybe)
@@ -104,16 +105,14 @@ eval env (CallE calleeE argsE) = do
     argsV <- eval env `mapM` argsE
     case calleeV of
         NativeFuncVal func -> func env argsV
-        LambdaVal closure params bodyExpr ->
-            if length argsV /= length params
-                then throwE $ EvalException $
+        LambdaVal closure params bodyExpr -> do
+            when (length argsV /= length params) $ throwE $ EvalException $
                     "Invalid number of arguments. Expected " ++ show (length params) ++
                     " argument(s)"
-                else do
-                    innerScope <- lift newScope
-                    let env' = Env (innerScope:closure)
-                    lift $ (scopeSetVar innerScope) `mapM_` (params `zip` argsV)
-                    eval env' bodyExpr
+            innerScope <- lift newScope
+            let env' = Env (innerScope:closure)
+            lift $ scopeSetVar innerScope `mapM_` (params `zip` argsV)
+            eval env' bodyExpr
         _ -> throwE $ EvalException $
             "Only a function can be called"
 
