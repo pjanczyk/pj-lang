@@ -24,6 +24,7 @@ dependencies:
 - parsec == 3.1.11
 - containers == 0.5.10.2
 - transformers == 0.5.2.0
+- either == 4.5
 - text
 - HUnit
 

@@ -36,6 +36,14 @@ instance Show Val where
     show (NativeFuncVal _)  = "<native func>"
     show (LambdaVal _ _ _)  = "<lambda>"
 
+instance Eq Val where
+    NullVal     == NullVal     = True
+    BoolVal a   == BoolVal b   = a == b
+    IntVal a    == IntVal b    = a == b
+    StringVal a == StringVal b = a == b
+    _           == _           = False
+
+
 valType :: Val -> String
 valType NullVal           = "null"
 valType (IntVal _)        = "int"
