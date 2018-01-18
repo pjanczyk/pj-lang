@@ -12,6 +12,7 @@ import PJLang.Env
 import PJLang.Parser (buildAst)
 import qualified PJLang.StdLib as StdLib
 
+-- | Creates a default environment that contains names from the standard library
 newEnv :: IO Env
 newEnv = do
     globalScope <- newScope
@@ -25,13 +26,14 @@ newEnv = do
                 ("readLine",  NativeFuncVal StdLib.readLine)
             ]
 
-
+-- | Result of 'evalCode'
 data ExecResult
-    = ExecSuccess Val
-    | ExecParseError ParseError
-    | ExecEvalError EvalException    
-            deriving (Show)    
+    = ExecSuccess Val             -- ^ Success
+    | ExecParseError ParseError   -- ^ Parse error
+    | ExecEvalError EvalException -- ^ Runtime exception
+            deriving (Show)
 
+-- | Parses and evaluates a code
 evalCode :: Env -> String -> IO ExecResult
 evalCode env code = do
     case buildAst code of
@@ -42,7 +44,7 @@ evalCode env code = do
                 Left evalException -> ExecEvalError evalException
                 Right val          -> ExecSuccess val
 
-
+-- | Evaluates an expression (AST)
 evalExpr :: Env -> Expr -> IOExceptEval Val
 
 evalExpr _env NullE = return NullVal

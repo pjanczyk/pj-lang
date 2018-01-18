@@ -19,7 +19,8 @@ import Control.Monad.Trans.Except (Except, ExceptT)
 import qualified PJLang.Ast as Ast (Expr)
 import qualified PJLang.Util.MutableMap as MMap
 
-
+-- | Runtime representation of a value.
+--   Every expression and variable has a value.
 data Val
     = NullVal
     | BoolVal Bool
@@ -44,6 +45,7 @@ instance Eq Val where
     _           == _           = False
 
 
+-- | A type of a variable as a string
 valType :: Val -> String
 valType NullVal           = "null"
 valType (IntVal _)        = "int"

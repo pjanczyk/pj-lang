@@ -12,7 +12,8 @@ import qualified Text.Parsec.Token as T
 
 import PJLang.Ast
 
-
+-- | Builds an Abstract Syntax Tree from a code.
+--   If the code has invalid format, returns @ParseError@.
 buildAst :: String -> Either ParseError Expr
 buildAst code = parseWithEof stmtList code
 
