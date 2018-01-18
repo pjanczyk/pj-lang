@@ -1,2 +1,6 @@
+import Control.Monad (void)
+import Test.HUnit
+import qualified Test.PJLang.Parser (tests)
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = void $ runTestTT Test.PJLang.Parser.tests
