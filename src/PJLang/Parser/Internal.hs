@@ -112,7 +112,7 @@ postfixE = baseE `manyFoldl` suffix
         subscriptE e = SubscriptE e <$> brackets expr
 
 expr :: Parser Expr
-expr = buildExpressionParser table (ifElseE <|> whileE <|> lambdaE <|> postfixE)
+expr = buildExpressionParser table (blockE <|> ifElseE <|> whileE <|> lambdaE <|> postfixE)
     where
         table =
             [[
