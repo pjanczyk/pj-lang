@@ -1,17 +1,16 @@
 name:                pjlang
 version:             0.1.0.0
-github:              "githubuser/pjlang"
-license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2017 Author name here"
+github:              "pjanczyk/pjlang"
+license:             GPL-3
+author:              "Piotr Janczyk"
+copyright:           "2018 Piotr Janczyk"
 
 extra-source-files:
 - README.md
 - ChangeLog.md
 
 # Metadata used when publishing your package
-synopsis:            Short description of your package
+synopsis:            Interpreter of PJ programming language
 # category:            Web
 
 # To avoid duplicated efforts in documentation and dealing with the
@@ -25,8 +24,8 @@ dependencies:
 - containers == 0.5.10.2
 - transformers == 0.5.2.0
 - either == 4.5
-- text
-- HUnit
+- text == 1.2.2.2
+- HUnit == 1.6.0.0
 
 library:
   source-dirs: src
