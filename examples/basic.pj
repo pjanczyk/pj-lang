@@ -1,7 +1,3 @@
-# pjlang
-
-
-```
 /* Calculates factorial (iterative implementation) */
 factorial = n -> {
     i = 1;
@@ -56,4 +52,3 @@ printFuncRange(fibonacci, 0, 5);
 
 printLine("fibonacci'");
 printFuncRange(fibonacci', 0, 5);
-```
