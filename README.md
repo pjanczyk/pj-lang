@@ -1,5 +1,4 @@
-# pjlang
-
+# PJ programming language
 
 ### Example 1
 ```
