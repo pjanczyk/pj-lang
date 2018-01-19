@@ -63,6 +63,7 @@ evalExpr env (PrefixOpE op e) = do
     case (op, v) of
         ("+", IntVal _)   -> return v
         ("-", IntVal int) -> return $ IntVal (-int)
+        ("!", BoolVal b)  -> return $ BoolVal (not b)
         _                 -> throwE $ EvalException $
             "Prefix operator `" ++ op ++
             "` cannot be applied to the type `" ++ valType v ++
@@ -86,6 +87,18 @@ evalExpr env (InfixOpE op lhsE rhsE)
         _                -> throwE $ EvalException $
             "The left-hand side of the operator `" ++ op ++
             "` must be an identifier"
+    | op == "&&" = do
+        lhsV <- evalExpr env lhsE
+        rhsV <- if lhsV == BoolVal False
+                    then return $ BoolVal False
+                    else evalExpr env rhsE
+        applyInfixOp op lhsV rhsV
+    | op == "||" = do
+        lhsV <- evalExpr env lhsE
+        rhsV <- if lhsV == BoolVal True
+                    then return $ BoolVal True
+                    else evalExpr env rhsE
+        applyInfixOp op lhsV rhsV
     | otherwise = do
         lhsV <- evalExpr env lhsE
         rhsV <- evalExpr env rhsE
@@ -105,6 +118,8 @@ evalExpr env (InfixOpE op lhsE rhsE)
         applyInfixOp "+"  (IntVal l)    (IntVal r)    = return $ IntVal (l + r)
         applyInfixOp "+"  (StringVal l) (StringVal r) = return $ StringVal (l ++ r)
         applyInfixOp "-"  (IntVal l)    (IntVal r)    = return $ IntVal (l - r)
+        applyInfixOp "&&" (BoolVal l)   (BoolVal r)   = return $ BoolVal (l && r)
+        applyInfixOp "||" (BoolVal l)   (BoolVal r)   = return $ BoolVal (l || r)
         applyInfixOp "=="  l             r            = return $ BoolVal (valsEq l r)
         applyInfixOp "!="  l             r            = return $ BoolVal (not (valsEq l r))
         applyInfixOp "<"  (IntVal l)    (IntVal r)    = return $ BoolVal (l < r)

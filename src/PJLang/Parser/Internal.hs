@@ -131,7 +131,8 @@ expr = buildExpressionParser table (blockE <|> ifElseE <|> whileE <|> lambdaE <|
         table =
             [[
                 mkPrefix "+",
-                mkPrefix "-"
+                mkPrefix "-",
+                mkPrefix "!"
             ], [
                 mkInfix "^"  AssocRight
             ], [
@@ -149,6 +150,9 @@ expr = buildExpressionParser table (blockE <|> ifElseE <|> whileE <|> lambdaE <|
                 mkInfix "%=" AssocRight,   
                 mkInfix "+=" AssocRight,
                 mkInfix "-=" AssocRight
+            ], [
+                mkInfix "&&" AssocLeft,
+                mkInfix "||" AssocLeft
             ], [
                 mkInfix "==" AssocLeft,
                 mkInfix "!=" AssocLeft,
