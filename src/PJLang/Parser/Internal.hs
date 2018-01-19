@@ -15,7 +15,7 @@ import PJLang.Ast
 -- | Builds an Abstract Syntax Tree from a code.
 --   If the code has invalid format, returns @ParseError@.
 buildAst :: String -> Either ParseError Expr
-buildAst code = parseWithEof stmtList code
+buildAst code = parseWithEof (whitespace *> stmtList) code
 
 --------------------------------------------------
 -- Helper functions
@@ -47,6 +47,9 @@ tokenParser = T.makeTokenParser $
         T.reservedNames   = ["if", "else", "then", "while", "do", "null", "true", "false"],
         T.caseSensitive   = True
     }
+
+whitespace :: Parser ()
+whitespace = T.whiteSpace tokenParser
 
 identifier :: Parser String
 identifier = T.identifier tokenParser
