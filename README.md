@@ -1,6 +1,7 @@
 # pjlang
 
 
+### Example 1
 ```
 /* Calculates factorial (iterative implementation) */
 factorial = n -> {
@@ -56,4 +57,52 @@ printFuncRange(fibonacci, 0, 5);
 
 printLine("fibonacci'");
 printFuncRange(fibonacci', 0, 5);
+```
+
+
+### Example 2
+```
+/* Creates a generator of sequence */
+range = (a, b) -> {
+    state = a;
+
+    -> {
+        if (state < b) {
+            val = state;
+            state += 1;
+            val;
+        }    
+    };
+};
+
+printSeq = seq -> {
+    while { elem = seq(); elem != null } {
+        print(elem);
+        print(" ");
+    };
+    printLine("");
+};
+
+map = (seq, mapping) -> {
+    -> {
+        elem = seq();
+        if elem != null {
+            mapping(elem);
+        };
+    };
+};   
+
+filter = (seq, cond) -> {
+    -> {
+        while { elem = seq(); elem != null && !cond(elem) } {
+        };
+        elem;
+    };
+};
+
+printSeq(range(1, 10));
+
+printSeq(map(range(1, 10), x -> 2 * x));
+
+printSeq(filter(range(1, 10), x -> x % 2 == 1));
 ```
