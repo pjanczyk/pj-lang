@@ -1,11 +1,9 @@
 module Test.PJLang.Interpreter (tests) where
 
-import Data.Either.Combinators (fromRight')
-import Test.HUnit (Test, test, assertEqual, assertFailure, (~:), (~?=))
+import Test.HUnit (Test, test, assertEqual, assertFailure, (~:))
 
-import PJLang.Parser (buildAst)
 import PJLang.Interpreter (ExecResult(..), newEnv, evalCode)
-import PJLang.Env (Val(..), EvalException(..))
+import PJLang.Env (Val(..))
 
 
 assertEvalSuccess :: String -> Val -> Test
