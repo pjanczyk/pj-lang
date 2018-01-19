@@ -23,7 +23,8 @@ newEnv = do
         builtins = [
                 ("print",     NativeFuncVal StdLib.print),
                 ("printLine", NativeFuncVal StdLib.printLine),
-                ("readLine",  NativeFuncVal StdLib.readLine)
+                ("readLine",  NativeFuncVal StdLib.readLine),
+                ("toString",  NativeFuncVal StdLib.toString)
             ]
 
 -- | Result of 'evalCode'
