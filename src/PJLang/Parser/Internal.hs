@@ -143,6 +143,16 @@ expr = buildExpressionParser table (blockE <|> ifElseE <|> whileE <|> lambdaE <|
                 mkInfix "+"  AssocLeft,
                 mkInfix "-"  AssocLeft
             ], [
+                mkInfix "==" AssocLeft,
+                mkInfix "!=" AssocLeft,
+                mkInfix "<"  AssocLeft,
+                mkInfix ">"  AssocLeft,
+                mkInfix "<=" AssocLeft,
+                mkInfix ">=" AssocLeft
+            ], [
+                mkInfix "&&" AssocLeft,
+                mkInfix "||" AssocLeft
+            ], [
                 mkInfix "="  AssocRight,
                 mkInfix "^=" AssocRight,
                 mkInfix "*=" AssocRight,
@@ -150,16 +160,6 @@ expr = buildExpressionParser table (blockE <|> ifElseE <|> whileE <|> lambdaE <|
                 mkInfix "%=" AssocRight,   
                 mkInfix "+=" AssocRight,
                 mkInfix "-=" AssocRight
-            ], [
-                mkInfix "&&" AssocLeft,
-                mkInfix "||" AssocLeft
-            ], [
-                mkInfix "==" AssocLeft,
-                mkInfix "!=" AssocLeft,
-                mkInfix "<"  AssocLeft,
-                mkInfix ">"  AssocLeft,
-                mkInfix "<=" AssocLeft,
-                mkInfix ">=" AssocLeft
             ]]
         mkPrefix sym       = Prefix (PrefixOpE sym <$ operator sym)
         mkInfix  sym assoc = Infix  (InfixOpE sym  <$ operator sym) assoc

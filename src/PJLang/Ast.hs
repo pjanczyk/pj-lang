@@ -15,11 +15,12 @@ data Expr
     | StringE String           
     -- | Identifier (e.g. variable name)
     | IdentifierE String            
-    -- | Prefix operator (@+@, @-@)
+    -- | Prefix operator (@+@, @-@, @!@)
     | PrefixOpE Op Expr 
     -- | Infix operator (@+@, @-@, @*@, @/@, @%@, @^@,
     --       @==@, @!=@, @<@, @>@, @<=@, @>=@,
-    --       @=@, @+=@, @-=@, @*=@, @/=@, @%=@, @^=@)
+    --       @=@, @+=@, @-=@, @*=@, @/=@, @%=@, @^=@,
+    --       @&&@, @||@)
     | InfixOpE Op Expr Expr 
     -- | Call expression, e.g. @`func(2, 3)`@
     | CallE                         
